@@ -3,7 +3,7 @@
 //This source code is original, but I did look here for reference:
 //https://www.programiz.com/dsa/graph-adjacency-list
 
-AdjacencyList::AdjacencyList(size_t numVertices, bool isDirected=false)
+AdjacencyList::AdjacencyList(size_t numVertices, bool isDirected)
 {
     //Creates a graph with specified num of vertices, with no edges
     vertices = new Node[numVertices];
@@ -17,9 +17,56 @@ AdjacencyList::AdjacencyList(size_t numVertices, bool isDirected=false)
 
 }
 
+AdjacencyList::AdjacencyList(std::string filename, bool isDirected)
+{
+    //Construct an adjacency list from an input file
+    std::ifstream file(filename);
+    size_t numVertices;
+    int currentLine = 2;
+
+    //Read in size and starting positions and initialize adj list members
+    file >> numVertices;
+    size = numVertices;
+
+    directed = isDirected;
+    vertices = new Node[numVertices];
+    degreeList = new LinkedList<int>[numVertices]; //index represents degree of children
+    edges = new bool[numVertices*numVertices];
+    for (size_t i = 0; i < numVertices; i++)
+        vertices[i].id = i;
+
+    int* startingPos = new int[size];
+    for (int i = 0; i < size; i++)
+    {
+        int pos;
+        file >> pos;
+        startingPos[i] = pos;
+        currentLine++;
+    }
+
+    //Read in the edges
+    for (int i = 0; i < size; i++)
+    {
+        while (currentLine < startingPos[i + 1])
+        {
+            int v2;
+            file >> v2;
+            addEdge(i, v2);
+            currentLine++;
+        }
+    }
+
+    file.close();
+    delete[] startingPos;
+
+    genDegreeList();
+}
+
 AdjacencyList::~AdjacencyList()
 {
     delete[] vertices;
+    delete[] degreeList;
+    delete[] edges;
 }
 
 AdjacencyList AdjacencyList::createCycle(size_t numVertices)
@@ -77,32 +124,16 @@ AdjacencyList AdjacencyList::createRandomGraph(size_t numVertices, size_t numEdg
 
         if (v1 != v2 && v1 < numVertices && v2 < numVertices)
         {
-            int edgeIndex = adj.V() * v1 + v2; //index in edge existence table - for v1->v2
-            int edgeIndexReverse = adj.V() * v2 + v1; //for v2->v1
-            if (!adj.edges[edgeIndex])
+            if (!adj.hasEdge(v1, v2))
             {
                 adj.addEdge(v1, v2);
-                adj.edges[edgeIndex] = true;
-                adj.edges[edgeIndexReverse] = true;
                 edgeCount++;
             }
         }
 
-        //Edge creation
-
-        //Edge creation
-        // std::string edgeStr = std::to_string(v1) + "-" + std::to_string(v2);
-        // std::string edgeStr2 = std::to_string(v2) + "-" + std::to_string(v1);
-        // if (v1 != v2 && !existingEdges.count(edgeStr)) //check if edge already exists
-        // {
-        //     existingEdges.insert(edgeStr);
-        //     existingEdges.insert(edgeStr2);
-        //     adj.addEdge(v1, v2);
-        //     edges++;
-        // }
-
     }
 
+    adj.genDegreeList();
     return adj;
 
 }
@@ -110,6 +141,13 @@ AdjacencyList AdjacencyList::createRandomGraph(size_t numVertices, size_t numEdg
 void AdjacencyList::Node::addNeighbor(int id)
 {
     neighbors.push_back(id);
+}
+
+bool AdjacencyList::hasEdge(int v1, int v2) const
+{
+    int edgeIndex = size * v1 + v2; //index in edge existence table - for v1->v2
+    int edgeIndexReverse = size * v2 + v1; //for v2->v1
+    return (edges[edgeIndex] || (!directed && edges[edgeIndexReverse]));
 }
 
 void AdjacencyList::addEdge(int v1, int v2)
@@ -120,9 +158,19 @@ void AdjacencyList::addEdge(int v1, int v2)
     if (v1 > size - 1 || v2 > size - 1)
         throw std::out_of_range("Invalid vertex input");
 
-    vertices[v1].addNeighbor(v2);
-    if (!directed) //undirected graph means edge goes both ways
-        vertices[v2].addNeighbor(v1);
+    //Update edges table
+    if (!hasEdge(v1, v2))
+    {
+        vertices[v1].addNeighbor(v2);
+        if (!directed) //undirected graph means edge goes both ways
+            vertices[v2].addNeighbor(v1);
+
+        int edgeIndex = size * v1 + v2; //index in edge existence table - for v1->v2
+        int edgeIndexReverse = size * v2 + v1; //for v2->v1
+        edges[edgeIndex] = true;
+        if (!directed)
+            edges[edgeIndexReverse] = true;
+    }
 }
 
 size_t AdjacencyList::V()
@@ -185,4 +233,34 @@ void AdjacencyList::genDegreeList()
     }
 
 
+}
+
+void AdjacencyList::SLVO()
+{
+    int* deletionOrder = new int[size];
+    int* degreeWhenDel = new int[size]; //[i] = degree of vi when deleted
+    int index = size - 1;
+    for (size_t i = 0; i < size; i++)
+    {
+        LinkedList<int>& degreeI = degreeList[i];
+        if (degreeI.size() == 0) continue;
+
+        for (auto iter = degreeI.begin(); !iter.isEnd(); iter++)
+        {
+            int& v = *iter;
+            deletionOrder[index] = v;
+            degreeWhenDel[index] = i;
+            index--;
+
+            Node& n = vertices[v];
+            n.deleted = true;
+            degreeI.erase(n.degreePtr);
+            
+            for (auto iter2 = n.neighbors.begin(); !iter2.isEnd(); iter2++)
+                
+        }
+    }
+
+    delete[] deletionOrder;
+    delete[] degreeWhenDel;
 }

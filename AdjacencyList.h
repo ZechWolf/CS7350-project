@@ -1,9 +1,9 @@
 #pragma once
 #include "LinkedList.h"
 #include "RandomGen.h"
-#include <iostream>
 #include <fstream>
 #include <string>
+#include <iostream>
 #include <unordered_set>
 
 //This source code is original, but I did look here for reference:
@@ -17,6 +17,8 @@ private:
     private:
 
         int id;
+        int color = -1;
+        int degree;
         bool deleted; //marks if removed by coloring algo
         LinkedList<int> neighbors;
         LinkedList<int>::ListIter degreePtr;
@@ -39,18 +41,29 @@ private:
 
     bool* edges; //look-up table to check edge existence. Edge v1->v2 exists if (|V|*v1 + v2) is true
 
+    //Coloring algos
+    void SLVO();
+
 public:
 
     //Constructors
     AdjacencyList() = default;
-    AdjacencyList(size_t numVertices, bool isDirected);
-    AdjacencyList(std::string filename); //not implemented currently
+    AdjacencyList(size_t numVertices, bool isDirected=false);
+    AdjacencyList(std::string filename, bool isDirected=false);
     ~AdjacencyList();
 
     enum class Distribution {
         UNIFORM,
         SKEWED,
         NORMAL
+    };
+
+    enum class Coloring {
+        SLVO,
+        SODL,
+        RANDOM,
+        LLVO,
+        LODL,
     };
 
     //Named constructors
@@ -63,6 +76,10 @@ public:
     void print();
     void save(std::string filename);
     void genDegreeList();
+    bool hasEdge(int v1, int v2) const;
     size_t V();
+
+    //Coloring methods
+    void colorGraph(AdjacencyList::Coloring algorithm);
 
 };
