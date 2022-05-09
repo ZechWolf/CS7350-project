@@ -1,6 +1,7 @@
 #pragma once
 #include "LinkedList.h"
 #include "RandomGen.h"
+#include <algorithm>
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -44,6 +45,9 @@ private:
 
     //Private methods and coloring algos
     void delVertex(int v);
+    void colorList(int* order);
+    void outputFile(std::string filename);
+
     void SLVO();
 
 public:

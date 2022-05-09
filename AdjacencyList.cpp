@@ -264,19 +264,47 @@ void AdjacencyList::delVertex(int v)
     
 }
 
+void AdjacencyList::outputFile(std::string filename)
+{
+    std::fstream file(filename + ".csv");
+    file << "vertex,color" << std::endl;
+    for (size_t i = 0; i < size; i++)
+        file << i << "," << vertices[i].color << std::endl;
+
+    file.close();
+}
+
 void AdjacencyList::colorGraph(AdjacencyList::Coloring algorithm)
 {
     if (algorithm == AdjacencyList::Coloring::SLVO)
         SLVO();
 }
 
+void AdjacencyList::colorList(int* order)
+{
+    //Colors the graph based on the given vertex ordering
+    for (size_t i = 0; i < size; i++)
+    {
+        Node& v1 = vertices[order[i]];
+        int color = 1;
+        for (size_t j = 0; j < i; j++)
+        {
+            Node& v2 = vertices[order[j]];
+            if (hasEdge(v1.id, v2.id) && color == v2.color)
+                color++;
+        }
+        v1.color = color;
+    }
+}
+
 void AdjacencyList::SLVO()
 {
     int* deletionOrder = new int[size];
     int* degreeWhenDel = new int[size]; //[i] = degree of vi when deleted
-    int index = size; //current index in deletionOrder
+    int index = size - 1; //current index in deletionOrder
     int deleted = 0; //total number of vertices removed
     int degreeIndex = 0; //current index in degreeList
+    int maxColors = 1; //keep track of max number of colors needed
     
     while (deleted < size)
     {
@@ -287,6 +315,9 @@ void AdjacencyList::SLVO()
             delVertex(v);
             deletionOrder[index] = v;
             degreeWhenDel[index] = degreeIndex;
+
+            if (degreeIndex + 1 > maxColors)
+                maxColors = degreeIndex + 1;
             
             index--;
             deleted++;
@@ -294,12 +325,8 @@ void AdjacencyList::SLVO()
         }
         else
             degreeIndex++;
-
         
     }
-
-    for (int i = 0; i < size; i++)
-        std::cout << deletionOrder[i] << " ";
 
     delete[] deletionOrder;
     delete[] degreeWhenDel;

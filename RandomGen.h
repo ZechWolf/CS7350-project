@@ -15,9 +15,10 @@ private:
     std::uniform_int_distribution<int> uniform;
     std::uniform_real_distribution<double> uniformReal;
 
-    int z1_stored = -1;
+    double z1_stored = -1;
 
     double randRealUniform();
+    int randNormalInRange();
 
 public:
 

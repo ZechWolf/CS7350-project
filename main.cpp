@@ -10,21 +10,18 @@ using namespace std;
 int main()
 {
 
-    //AdjacencyList t3 = AdjacencyList::createRandomGraph(10, 10, AdjacencyList::Distribution::UNIFORM);
+    AdjacencyList t3 = AdjacencyList::createRandomGraph(10000, 2000000, AdjacencyList::Distribution::NORMAL);
     //t3.colorGraph(AdjacencyList::Coloring::SLVO);
 
-    AdjacencyList g1(10);
-    g1.addEdge(5,6);
-    g1.addEdge(6,7);
-    g1.addEdge(7,8);
+    AdjacencyList g1(5);
+    g1.addEdge(0,2);
+    g1.addEdge(1,2);
+    g1.addEdge(2,3);
+    g1.addEdge(2,4);
+    g1.addEdge(3,4);
     g1.genDegreeList();
 
-    g1.colorGraph(AdjacencyList::Coloring::SLVO);
-
-    int x = 0;
-    // RandomGen r(50);
-    // for (int i = 0; i < 1000; i++)
-    //     cout << r.randNormal() << endl;
+    //g1.colorGraph(AdjacencyList::Coloring::SLVO);
 
     return 0;
 
