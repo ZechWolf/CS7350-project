@@ -17,8 +17,9 @@ private:
     private:
 
         int id;
-        int color = -1;
-        int degree;
+        int color = -1; //assigned color
+        int currentDegree; //current degree during coloring process
+        int originalDegree; //degree in the original graph
         bool deleted; //marks if removed by coloring algo
         LinkedList<int> neighbors;
         LinkedList<int>::ListIter degreePtr;
@@ -41,7 +42,8 @@ private:
 
     bool* edges; //look-up table to check edge existence. Edge v1->v2 exists if (|V|*v1 + v2) is true
 
-    //Coloring algos
+    //Private methods and coloring algos
+    void delVertex(int v);
     void SLVO();
 
 public:

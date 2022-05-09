@@ -228,38 +228,78 @@ void AdjacencyList::genDegreeList()
     for (size_t i = 0; i < size; i++)
     {
         int degree = vertices[i].neighbors.size();
-        degreeList[degree].push_back(vertices[i].id); //insert to linked list at index "degree"
-        vertices[i].degreePtr = degreeList[degree].end(); //add reference to element in linked list
+        degreeList[degree].push_front(vertices[i].id); //insert to linked list at index "degree"
+        vertices[i].degreePtr = degreeList[degree].begin(); //add reference to element in linked list
+        vertices[i].originalDegree = degree;
+        vertices[i].currentDegree = degree;
     }
 
 
+}
+
+void AdjacencyList::delVertex(int v)
+{
+    //Mark a vertex as removed during the coloring process
+    //Handles changing the degree of neighboring vertices
+
+    Node& n = vertices[v];
+    n.deleted = true;
+    degreeList[n.currentDegree].erase(n.degreePtr);
+
+    //Decrement degree of v's neighbors
+    if (n.neighbors.size() > 0)
+    {
+        for (auto iter = n.neighbors.begin(); !iter.isEnd(); iter++)
+        {
+            Node& neighbor = vertices[*iter];
+            if (!neighbor.deleted)
+            {
+                degreeList[neighbor.currentDegree].erase(neighbor.degreePtr);
+                neighbor.currentDegree--;
+                degreeList[neighbor.currentDegree].push_front(neighbor.id);
+                neighbor.degreePtr = degreeList[neighbor.currentDegree].begin();
+            }
+        }
+    }
+    
+}
+
+void AdjacencyList::colorGraph(AdjacencyList::Coloring algorithm)
+{
+    if (algorithm == AdjacencyList::Coloring::SLVO)
+        SLVO();
 }
 
 void AdjacencyList::SLVO()
 {
     int* deletionOrder = new int[size];
     int* degreeWhenDel = new int[size]; //[i] = degree of vi when deleted
-    int index = size - 1;
-    for (size_t i = 0; i < size; i++)
+    int index = size; //current index in deletionOrder
+    int deleted = 0; //total number of vertices removed
+    int degreeIndex = 0; //current index in degreeList
+    
+    while (deleted < size)
     {
-        LinkedList<int>& degreeI = degreeList[i];
-        if (degreeI.size() == 0) continue;
-
-        for (auto iter = degreeI.begin(); !iter.isEnd(); iter++)
+        LinkedList<int>& degreeI = degreeList[degreeIndex];
+        if (degreeI.size() > 0) //continue if there is no vertex to delete
         {
-            int& v = *iter;
+            int v = *(degreeI.begin());
+            delVertex(v);
             deletionOrder[index] = v;
-            degreeWhenDel[index] = i;
-            index--;
-
-            Node& n = vertices[v];
-            n.deleted = true;
-            degreeI.erase(n.degreePtr);
+            degreeWhenDel[index] = degreeIndex;
             
-            for (auto iter2 = n.neighbors.begin(); !iter2.isEnd(); iter2++)
-                
+            index--;
+            deleted++;
+            degreeIndex = 0; //reset back to degree 0 to get to vertices that lowered in degree
         }
+        else
+            degreeIndex++;
+
+        
     }
+
+    for (int i = 0; i < size; i++)
+        std::cout << deletionOrder[i] << " ";
 
     delete[] deletionOrder;
     delete[] degreeWhenDel;

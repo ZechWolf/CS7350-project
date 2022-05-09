@@ -282,16 +282,20 @@ template <class T>
 void LinkedList<T>::erase(LinkedList<T>::ListIter& position)
 {
     //Removes the element referenced by the "position" iterator
-    if (position.iter == head)
+    if (position.iter == head && _size > 1)
     {
         position.iter->next->previous = nullptr;
         head = position.iter->next;
         delete position.iter;
     }
-    else if (position.iter == tail)
+    else if (position.iter == tail && _size > 1)
     {
         position.iter->previous->next = nullptr;
         tail = position.iter->previous;
+        delete position.iter;
+    }
+    else if (_size == 1)
+    {
         delete position.iter;
     }
     else
