@@ -1,5 +1,10 @@
 #include "RandomGen.h"
 
+RandomGen::~RandomGen()
+{
+    delete[] ranges;
+}
+
 double RandomGen::randRealUniform()
 {
     return uniformReal(generator);
@@ -7,7 +12,16 @@ double RandomGen::randRealUniform()
 
 int RandomGen::randSkewed()
 {
-    return 0;
+    double s = (max*(max + 1)) / 2;
+    double r = randRealUniform();
+    int result;
+    
+    for (int i = 1; i < max + 1; i++)
+    {
+        if (r >= ranges[i-1] && r < ranges[i])
+            return i - 1;
+    }
+
 }
 
 int RandomGen::randUniform()

@@ -6,9 +6,9 @@
 AdjacencyList::AdjacencyList(size_t numVertices, bool isDirected)
 {
     //Creates a graph with specified num of vertices, with no edges
-    vertices = new Node[numVertices];
-    degreeList = new LinkedList<int>[numVertices]; //index represents degree of children
-    edges = new bool[numVertices*numVertices]; //index |V|*v1 + v2 is true if v1->v2 is an edge
+    vertices = new Node[numVertices]();
+    degreeList = new LinkedList<int>[numVertices](); //index represents degree of children
+    edges = new bool[numVertices*numVertices](); //index |V|*v1 + v2 is true if v1->v2 is an edge
     directed = isDirected;
     size = numVertices;
 
@@ -29,9 +29,9 @@ AdjacencyList::AdjacencyList(std::string filename, bool isDirected)
     size = numVertices;
 
     directed = isDirected;
-    vertices = new Node[numVertices];
-    degreeList = new LinkedList<int>[numVertices]; //index represents degree of children
-    edges = new bool[numVertices*numVertices];
+    vertices = new Node[numVertices]();
+    degreeList = new LinkedList<int>[numVertices](); //index represents degree of children
+    edges = new bool[numVertices*numVertices]();
     for (size_t i = 0; i < numVertices; i++)
         vertices[i].id = i;
 
@@ -232,9 +232,9 @@ void AdjacencyList::genDegreeList()
         vertices[i].degreePtr = degreeList[degree].begin(); //add reference to element in linked list
         vertices[i].originalDegree = degree;
         vertices[i].currentDegree = degree;
+        averageOriginalDegree += degree;
     }
-
-
+    averageOriginalDegree /= size;
 }
 
 void AdjacencyList::delVertex(int v)
@@ -278,11 +278,18 @@ void AdjacencyList::colorGraph(AdjacencyList::Coloring algorithm)
 {
     if (algorithm == AdjacencyList::Coloring::SLVO)
         SLVO();
+    else if (algorithm == AdjacencyList::Coloring::SODL)
+        SODL();
+    else if (algorithm == AdjacencyList::Coloring::RANDOM)
+        RANDOM();
+    else if (algorithm == AdjacencyList::Coloring::LLVO)
+        LLVO();
 }
 
-void AdjacencyList::colorList(int* order)
+void AdjacencyList::colorList(int* order, int* degWhenDel)
 {
     //Colors the graph based on the given vertex ordering
+    int maxColor = 1;
     for (size_t i = 0; i < size; i++)
     {
         Node& v1 = vertices[order[i]];
@@ -294,11 +301,30 @@ void AdjacencyList::colorList(int* order)
                 color++;
         }
         v1.color = color;
+        if (color > maxColor)
+            maxColor = color;
+
+        //Printing
+        std::cout << "Vertex " << v1.id << ":" << std::endl;
+        std::cout << "Color: " << color << ", Original degree: " << v1.originalDegree;
+        if (degWhenDel == nullptr)
+            std::cout << std::endl;
+        else
+            std::cout << ", Degree when deleted: " << degWhenDel[i] << std::endl;
+
+        puts("");
+
     }
+
+    std::cout << "SUMMARY:" << std::endl;
+    std::cout << "Colors used: " << maxColor << std::endl;
+    std::cout << "Average original degree: " << averageOriginalDegree << std::endl;
 }
 
 void AdjacencyList::SLVO()
 {
+    //Smallest last vertex ordering
+
     int* deletionOrder = new int[size];
     int* degreeWhenDel = new int[size]; //[i] = degree of vi when deleted
     int index = size - 1; //current index in deletionOrder
@@ -325,8 +351,96 @@ void AdjacencyList::SLVO()
         }
         else
             degreeIndex++;
-        
     }
+
+    //Color the graph and output summary stats
+    colorList(deletionOrder, degreeWhenDel);
+    std::cout << "Maximum degree when deleted: " << maxColors << std::endl;
+
+    int termCliqueSize = 1;
+    for (int i = 0; i < size; i++)
+    {
+        if (!(degreeWhenDel[i] < degreeWhenDel[i+1]))
+            break;
+        termCliqueSize++;
+    }
+
+    std::cout << "Size of terminal clique: " << termCliqueSize << std::endl;
+
+
+    delete[] deletionOrder;
+    delete[] degreeWhenDel;
+}
+
+void AdjacencyList::SODL()
+{
+    //Smallest original degree last ordering
+    int* order = new int[size];
+    int index = 0; //current index in Order
+    int degreeIndex = 0; //current index in degreeList
+
+    for (int i = 0; i < size; i++)
+    {
+        LinkedList<int>& degreeI = degreeList[i];
+        for (auto iter = degreeI.begin(); !iter.isEnd(); iter++)
+        {
+            order[index] = *iter;
+            index++;
+        }
+    }
+
+    colorList(order);
+
+}
+
+void AdjacencyList::RANDOM()
+{
+    //Random ordering
+    int* order = new int[size];
+    for (int i = 0; i < size; i++)
+        order[i] = i;
+
+    //Shuffle the sequence -- fisher yates shuffle https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
+    for (int i = size - 1; i >= 0; i--)
+    {
+        RandomGen rg(i);
+        int j = rg.randUniform();
+        std::swap(order[j], order[i]);
+    }
+    
+    colorList(order);
+    
+}
+
+void AdjacencyList::LLVO()
+{
+    //Largest last vertex ordering
+
+    int* deletionOrder = new int[size];
+    int* degreeWhenDel = new int[size]; //[i] = degree of vi when deleted
+    int index = size - 1; //current index in deletionOrder
+    int deleted = 0; //total number of vertices removed
+    int degreeIndex = size - 1; //current index in degreeList, start at highest degree for LLVO
+    
+    while (deleted < size)
+    {
+        LinkedList<int>& degreeI = degreeList[degreeIndex];
+        if (degreeI.size() > 0) //continue if there is no vertex to delete
+        {
+            int v = *(degreeI.begin());
+            delVertex(v);
+            deletionOrder[index] = v;
+            degreeWhenDel[index] = degreeIndex;
+            
+            index--;
+            deleted++;
+            degreeIndex = size - 1; //reset back to degree 0 to get to vertices that lowered in degree
+        }
+        else
+            degreeIndex--;
+    }
+
+    colorList(deletionOrder, degreeWhenDel);
 
     delete[] deletionOrder;
     delete[] degreeWhenDel;

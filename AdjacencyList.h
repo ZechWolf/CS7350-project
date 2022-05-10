@@ -1,11 +1,9 @@
 #pragma once
 #include "LinkedList.h"
 #include "RandomGen.h"
-#include <algorithm>
 #include <fstream>
 #include <string>
 #include <iostream>
-#include <unordered_set>
 
 //This source code is original, but I did look here for reference:
 //https://www.programiz.com/dsa/graph-adjacency-list
@@ -40,15 +38,20 @@ private:
     LinkedList<int>* degreeList; //adj list representing degree list of each vertex
     bool directed; //true if the graph is a directed graph
     size_t size;
+    double averageOriginalDegree = 0;
 
     bool* edges; //look-up table to check edge existence. Edge v1->v2 exists if (|V|*v1 + v2) is true
 
     //Private methods and coloring algos
     void delVertex(int v);
-    void colorList(int* order);
+    void colorList(int* order, int* degWhenDel=nullptr);
     void outputFile(std::string filename);
 
     void SLVO();
+    void SODL();
+    void RANDOM();
+    void LLVO();
+    void LODL();
 
 public:
 
