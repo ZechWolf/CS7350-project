@@ -32,10 +32,7 @@ public:
 
         double s = (max*(max + 1)) / 2;
         for (int i = 1; i < max + 1; i++)
-        {
             ranges[i] = ranges[i-1] + ((max - i + 1) / s);
-            printf("%f, ", ranges[i]);
-        }
     }
     ~RandomGen();
 
@@ -44,3 +41,4 @@ public:
     int randNormal();
 
 };
+    

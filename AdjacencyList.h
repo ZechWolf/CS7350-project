@@ -52,6 +52,7 @@ private:
     void RANDOM();
     void LLVO();
     void LODL();
+    void inOrder();
 
 public:
 
@@ -73,6 +74,7 @@ public:
         RANDOM,
         LLVO,
         LODL,
+        IN_ORDER
     };
 
     //Named constructors
@@ -87,6 +89,7 @@ public:
     void genDegreeList();
     bool hasEdge(int v1, int v2) const;
     size_t V();
+    void conflictHist(std::string filename);
 
     //Coloring methods
     void colorGraph(AdjacencyList::Coloring algorithm);

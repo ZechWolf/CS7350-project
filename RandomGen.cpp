@@ -19,8 +19,13 @@ int RandomGen::randSkewed()
     for (int i = 1; i < max + 1; i++)
     {
         if (r >= ranges[i-1] && r < ranges[i])
-            return i - 1;
+        {
+            result = i - 1;
+            break;
+        }
     }
+
+    return result;
 
 }
 

@@ -76,8 +76,6 @@ AdjacencyList AdjacencyList::createCycle(size_t numVertices)
         adj.addEdge(i, i+1);
     adj.addEdge(numVertices - 1, 0);
 
-    adj.genDegreeList();
-
     return adj;
 }
 
@@ -90,8 +88,6 @@ AdjacencyList AdjacencyList::createCompleteGraph(size_t numVertices)
                 adj.addEdge(i, j);
 
     adj.directed = false; //change back to undirected
-
-    adj.genDegreeList();
     
     return adj;
 }
@@ -133,7 +129,6 @@ AdjacencyList AdjacencyList::createRandomGraph(size_t numVertices, size_t numEdg
 
     }
 
-    adj.genDegreeList();
     return adj;
 
 }
@@ -159,18 +154,15 @@ void AdjacencyList::addEdge(int v1, int v2)
         throw std::out_of_range("Invalid vertex input");
 
     //Update edges table
-    if (!hasEdge(v1, v2))
-    {
-        vertices[v1].addNeighbor(v2);
-        if (!directed) //undirected graph means edge goes both ways
-            vertices[v2].addNeighbor(v1);
+    vertices[v1].addNeighbor(v2);
+    if (!directed) //undirected graph means edge goes both ways
+        vertices[v2].addNeighbor(v1);
 
-        int edgeIndex = size * v1 + v2; //index in edge existence table - for v1->v2
-        int edgeIndexReverse = size * v2 + v1; //for v2->v1
-        edges[edgeIndex] = true;
-        if (!directed)
-            edges[edgeIndexReverse] = true;
-    }
+    int edgeIndex = size * v1 + v2; //index in edge existence table - for v1->v2
+    int edgeIndexReverse = size * v2 + v1; //for v2->v1
+    edges[edgeIndex] = true;
+    if (!directed)
+        edges[edgeIndexReverse] = true;
 }
 
 size_t AdjacencyList::V()
@@ -284,6 +276,10 @@ void AdjacencyList::colorGraph(AdjacencyList::Coloring algorithm)
         RANDOM();
     else if (algorithm == AdjacencyList::Coloring::LLVO)
         LLVO();
+    else if (algorithm == AdjacencyList::Coloring::LODL)
+        LODL();
+    else
+        inOrder();
 }
 
 void AdjacencyList::colorList(int* order, int* degWhenDel)
@@ -367,6 +363,9 @@ void AdjacencyList::SLVO()
 
     std::cout << "Size of terminal clique: " << termCliqueSize << std::endl;
 
+    std::ofstream file("slvo_plot.csv");
+    for (int i = 0; i < size; i++)
+        file << i + 1 << "," << degreeWhenDel[i] << std::endl;
 
     delete[] deletionOrder;
     delete[] degreeWhenDel;
@@ -376,7 +375,7 @@ void AdjacencyList::SODL()
 {
     //Smallest original degree last ordering
     int* order = new int[size];
-    int index = 0; //current index in Order
+    int index = size - 1; //current index in Order
     int degreeIndex = 0; //current index in degreeList
 
     for (int i = 0; i < size; i++)
@@ -385,11 +384,13 @@ void AdjacencyList::SODL()
         for (auto iter = degreeI.begin(); !iter.isEnd(); iter++)
         {
             order[index] = *iter;
-            index++;
+            index--;
         }
     }
 
     colorList(order);
+
+    delete[] order;
 
 }
 
@@ -409,6 +410,8 @@ void AdjacencyList::RANDOM()
     }
     
     colorList(order);
+
+    delete[] order;
     
 }
 
@@ -444,4 +447,47 @@ void AdjacencyList::LLVO()
 
     delete[] deletionOrder;
     delete[] degreeWhenDel;
+}
+
+void AdjacencyList::LODL()
+{
+    //Largest original degree last ordering
+    int* order = new int[size];
+    int index = 0; //current index in Order
+    int degreeIndex = 0; //current index in degreeList
+
+    for (int i = 0; i < size; i++)
+    {
+        LinkedList<int>& degreeI = degreeList[i];
+        for (auto iter = degreeI.begin(); !iter.isEnd(); iter++)
+        {
+            order[index] = *iter;
+            index++;
+        }
+    }
+
+    colorList(order);
+
+    delete[] order;
+
+}
+
+void AdjacencyList::inOrder()
+{
+    int* order = new int[size];
+    for (int i = 0; i < size; i++)
+        order[i] = i;
+
+    colorList(order);
+
+    delete[] order;
+}
+
+void AdjacencyList::conflictHist(std::string filename)
+{
+    //Outputs histogram of conflicts for each vertex
+    std::ofstream file(filename);
+    file << "vertex,numEdges" << std::endl;
+    for (size_t i = 0; i < size; i++)
+        file << i << "," << vertices[i].neighbors.size() << std::endl;
 }
